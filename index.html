@@ -342,12 +342,15 @@
                     } else if (result.status === 'nopassword') {
                         setAuthError('雲端尚未設定登入密碼，請先在 Apps Script 設定 (指令碼屬性 APP_PASSWORD)。');
                         setPasswordInput('');
-                    } else {
+                    } else if (result.status === 'unauthorized') {
                         setAuthError('密碼錯誤，請重新輸入。');
+                        setPasswordInput('');
+                    } else {
+                        setAuthError(`雲端回應異常 (${result.status || '沒有回應'}${result.message ? '：' + result.message : ''})。多數是 Apps Script 還沒貼上最新程式碼並重新部署成新版本。`);
                         setPasswordInput('');
                     }
                 } catch (err) {
-                    setAuthError('無法連線至雲端驗證，請檢查網絡與 Apps Script 設定後再試。');
+                    setAuthError('無法連線至雲端驗證，請檢查網絡與 Apps Script 設定 (部署的「誰可以存取」要是「任何人」) 後再試。');
                 } finally {
                     loggingInRef.current = false;
                 }
@@ -1258,7 +1261,7 @@
                             e(Icon, { name: "shield-check", className: "w-8 h-8 text-white" })
                         ),
                         e('h2', { className: "text-2xl font-black tracking-wide mb-1 text-slate-800" }, "譚李麗芬紀念中學"),
-                        e('p', { className: "text-xs text-slate-500 mb-6 font-semibold tracking-wider" }, "體育科登分系統 - 獨立安全鎖"),
+                        e('p', { className: "text-xs text-slate-500 mb-6 font-semibold tracking-wider" }, `體育科登分系統 - 獨立安全鎖 (網頁版本 ${EXPECTED_SCRIPT_VERSION})`),
                         
                         e('form', { onSubmit: (evt) => { evt.preventDefault(); handleLoginAttempt(passwordInput); }, className: "space-y-4" },
                             e('div', { className: "relative" },
