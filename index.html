@@ -41,7 +41,7 @@
         // =========================================================================
         // 💡 老師請注意：請將您部署好的 Google Apps Script 網頁應用程式網址填入下方雙引號中！
         // =========================================================================
-        const DEFAULT_CLOUD_URL = "https://script.google.com/macros/s/AKfycbwOXPgfhjdAMmkLmyfqemZhVeiilMLKEMC8pr4JcP68GRna5LPXewTe5_4YRghcll5Hkg/exec"; 
+        const DEFAULT_CLOUD_URL = "https://script.google.com/macros/s/AKfycbxs4MQBoj0p5UkUqQuG4lFD4aIrYy_2usc_N1AoTBxfIijren0e40OJq3oPgbI4liGcZg/exec"; 
 
         const { useState, useEffect, useMemo, createElement, useRef } = React;
         const e = createElement;
@@ -333,7 +333,10 @@
                         redirect: 'follow',
                         body: JSON.stringify({ action: 'login', password: pwd })
                     });
-                    const result = await response.json();
+                    const rawText = await response.text();
+                    let result;
+                    try { result = JSON.parse(rawText); }
+                    catch (parseErr) { throw new Error('NOT_JSON:' + rawText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100)); }
                     if (result.status === 'success') {
                         safeSessionStorage.setItem('pe_app_pwd', pwd);
                         setIsAuthenticated(true);
@@ -353,7 +356,12 @@
                         setPasswordInput('');
                     }
                 } catch (err) {
-                    setAuthError('無法連線至雲端驗證，請檢查網絡與 Apps Script 設定 (部署的「誰可以存取」要是「任何人」) 後再試。');
+                    const msg = String(err && err.message ? err.message : err);
+                    if (msg.indexOf('NOT_JSON:') === 0) {
+                        setAuthError(`雲端回應不是 JSON：「${msg.slice(9)}」。這通常表示 Apps Script 需要重新授權、「誰可以存取」不是「任何人」，或程式碼有錯誤。`);
+                    } else {
+                        setAuthError(`連不到雲端網址 (${msg})。請確認網址是 /exec 結尾、網絡正常，且 Apps Script 已授權、部署的「誰可以存取」是「任何人」。`);
+                    }
                 } finally {
                     loggingInRef.current = false;
                 }
