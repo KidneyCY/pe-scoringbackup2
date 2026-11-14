@@ -41,7 +41,7 @@
         // =========================================================================
         // 💡 老師請注意：請將您部署好的 Google Apps Script 網頁應用程式網址填入下方雙引號中！
         // =========================================================================
-        const DEFAULT_CLOUD_URL = "https://script.google.com/a/macros/tllf.edu.hk/s/AKfycbwOXPgfhjdAMmkLmyfqemZhVeiilMLKEMC8pr4JcP68GRna5LPXewTe5_4YRghcll5Hkg/exec"; 
+        const DEFAULT_CLOUD_URL = "https://script.google.com/macros/s/AKfycbxs4MQBoj0p5UkUqQuG4lFD4aIrYy_2usc_N1AoTBxfIijren0e40OJq3oPgbI4liGcZg/exec"; 
 
         const { useState, useEffect, useMemo, createElement, useRef } = React;
         const e = createElement;
@@ -301,6 +301,9 @@
             const [isSyncing, setIsSyncing] = useState(false);
             const [isCloudLoading, setIsCloudLoading] = useState(false);
             const [cloudConnectionStatus, setCloudConnectionStatus] = useState("pending");
+            const [showUrlEditor, setShowUrlEditor] = useState(false);
+            const cloudUrlRef = useRef(cloudUrl);
+            useEffect(() => { cloudUrlRef.current = cloudUrl; }, [cloudUrl]);
             const [scriptVersion, setScriptVersion] = useState('');   // 最近一次讀取雲端時，Apps Script 回報的版本號
 
             const pwdRef = useRef(passwordInput);
@@ -323,7 +326,7 @@
                 loggingInRef.current = true;
                 setAuthError('驗證中...');
                 try {
-                    const targetUrl = cloudUrl || DEFAULT_CLOUD_URL;
+                    const targetUrl = cloudUrlRef.current || DEFAULT_CLOUD_URL;
                     const response = await fetch(targetUrl, {
                         method: 'POST',
                         mode: 'cors',
@@ -1288,6 +1291,11 @@
                             ),
                             e('button', { type: "submit", className: "w-full mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 font-bold text-sm py-3.5 rounded-xl shadow-md shadow-emerald-600/10 transition-all flex items-center justify-center gap-2 text-white" },
                                 e(Icon, { name: "log-in", className: "w-4 h-4" }), " 安全登入 (支援實體鍵盤)"
+                            ),
+                            e('button', { type: "button", onClick: () => setShowUrlEditor(v => !v), className: "text-[10px] text-slate-400 underline mt-2" }, "雲端網址設定"),
+                            showUrlEditor && e('div', { className: "space-y-1.5 text-left" },
+                                e('input', { type: "text", value: cloudUrl, onChange: (evt) => setCloudUrl(evt.target.value), placeholder: "Apps Script 網址 (https://script.google.com/macros/s/…/exec)", className: "w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[10px] font-mono focus:outline-none focus:border-emerald-500" }),
+                                e('p', { className: "text-[10px] text-slate-400" }, "網址改好會自動儲存，再輸入密碼登入即可。")
                             )
                         )
                     )
